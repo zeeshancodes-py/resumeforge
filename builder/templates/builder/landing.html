@@ -1,0 +1,142 @@
+{% extends 'builder/base.html' %}
+{% block title %}ResumeForge — Build Professional Resumes{% endblock %}
+
+{% block extra_css %}
+.hero { min-height:90vh; display:flex; align-items:center; position:relative; overflow:hidden; }
+.hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 70% 50%,rgba(233,69,96,.12) 0%,transparent 70%),radial-gradient(ellipse at 20% 80%,rgba(15,52,96,.4) 0%,transparent 60%); }
+.hero-title { font-family:'Playfair Display',serif; font-size:clamp(2.5rem,6vw,5rem); font-weight:700; line-height:1.1; }
+.hero-title span { background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.floating-cv { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; animation:float 4s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.tpl-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; transition:border-color .2s,transform .2s; }
+.tpl-card:hover { border-color:var(--accent); transform:translateY(-4px); }
+.tpl-thumb { width:100%; height:140px; border-radius:8px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
+.feat-icon { width:52px; height:52px; background:rgba(233,69,96,.12); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--accent); margin-bottom:16px; }
+.step-num { width:36px; height:36px; background:var(--gradient); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; flex-shrink:0; }
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div class="container position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="badge-section mb-3">✦ Professional Resume Builder</div>
+        <h1 class="hero-title">Craft Resumes That<br><span>Get You Hired</span></h1>
+        <p class="mt-4 mb-5" style="color:var(--muted);font-size:1.1rem;max-width:480px;line-height:1.8">
+          Choose from 6 stunning templates, fill in your details, and export pixel-perfect PDFs instantly.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="{% url 'register' %}" class="btn btn-accent btn-lg px-4 py-3"><i class="bi bi-rocket-takeoff me-2"></i>Build My Resume — Free</a>
+          <a href="#templates" class="btn btn-outline-accent btn-lg px-4 py-3"><i class="bi bi-eye me-2"></i>View Templates</a>
+        </div>
+        <div class="mt-4 d-flex gap-4" style="color:var(--muted);font-size:.85rem">
+          <span><i class="bi bi-check2 text-success me-1"></i>Free</span>
+          <span><i class="bi bi-check2 text-success me-1"></i>6 templates</span>
+          <span><i class="bi bi-check2 text-success me-1"></i>PDF export</span>
+          <span><i class="bi bi-check2 text-success me-1"></i>ATS friendly</span>
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="floating-cv">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div style="width:52px;height:52px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem">👤</div>
+            <div>
+              <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600">Alex Johnson</div>
+              <div style="color:var(--accent);font-size:.85rem">Senior Software Engineer</div>
+            </div>
+          </div>
+          <div style="background:var(--accent);height:3px;width:40px;border-radius:2px;margin-bottom:8px"></div>
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Experience</div>
+          <div style="background:rgba(255,255,255,.05);border-radius:6px;padding:10px;font-size:.8rem;margin-bottom:16px">
+            <div style="font-weight:500">Senior Engineer — Google</div>
+            <div style="color:var(--muted)">2021 – Present</div>
+          </div>
+          <div style="background:var(--accent);height:3px;width:40px;border-radius:2px;margin-bottom:8px"></div>
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Skills</div>
+          <div class="d-flex flex-wrap gap-2">
+            {% with "Python,React,AWS,Docker,TypeScript" as skills_string %}
+  {% for s in skills_string.split %}
+    <span>{{ s }}</span>
+  {% endfor %}
+{% endwith %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Templates -->
+<section id="templates" style="padding:80px 0">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="badge-section mb-3">Templates</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:2.2rem">6 Professional Designs</h2>
+    </div>
+    <div class="row g-4">
+      {% for t in templates %}
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="tpl-card">
+          <div class="tpl-thumb" style="background:{{ t.bg }}">{{ t.icon }}</div>
+          <div style="font-weight:600;font-size:.9rem">{{ t.name }}</div>
+          <div style="color:var(--muted);font-size:.75rem;margin-top:4px">{{ t.desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'register' %}" class="btn btn-accent btn-lg px-5">Start Building Now</a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section style="padding:80px 0">
+  <div class="container">
+    <div class="row g-4">
+      {% for f in features %}
+      <div class="col-md-4">
+        <div class="card-dark p-4 h-100">
+          <div class="feat-icon">{{ f.icon }}</div>
+          <h5 style="font-family:'Playfair Display',serif">{{ f.title }}</h5>
+          <p style="color:var(--muted);font-size:.9rem">{{ f.desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Steps -->
+<section style="padding:80px 0;background:rgba(22,33,62,.5)">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 style="font-family:'Playfair Display',serif;font-size:2.2rem">How It Works</h2>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% for s in steps %}
+      <div class="col-md-3 text-center">
+        <div class="step-num mx-auto mb-3">{{ forloop.counter }}</div>
+        <div class="fs-2 mb-2">{{ s.icon }}</div>
+        <h6 style="font-weight:600">{{ s.title }}</h6>
+        <p style="color:var(--muted);font-size:.85rem">{{ s.desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:80px 0;text-align:center">
+  <div class="container">
+    <h2 style="font-family:'Playfair Display',serif;font-size:2.5rem;margin-bottom:16px">Ready to land your dream job?</h2>
+    <p style="color:var(--muted);font-size:1.1rem;margin-bottom:32px">Build your perfect resume in minutes.</p>
+    <a href="{% url 'register' %}" class="btn btn-accent btn-lg px-5 py-3">Create Your Resume — It's Free</a>
+  </div>
+</section>
+
+<footer style="background:var(--surface);border-top:1px solid var(--border);padding:24px 0;text-align:center;color:var(--muted);font-size:.85rem">
+  <div class="container">© 2024 ResumeForge — Build better careers</div>
+</footer>
+{% endblock %}

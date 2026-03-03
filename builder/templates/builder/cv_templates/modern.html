@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ resume.full_name }} — Resume</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root { --accent: {{ resume.accent_color }}; }
+body { font-family:'Open Sans',sans-serif; background:#f0f2f5; }
+.cv-wrap { max-width:820px; margin:0 auto; background:white; box-shadow:0 4px 40px rgba(0,0,0,.15); min-height:1120px; }
+
+/* Header */
+.cv-header { background:var(--accent); color:white; padding:44px 48px 36px; display:flex; align-items:center; gap:28px; }
+.cv-photo { width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.4); flex-shrink:0; }
+.cv-photo-ph { width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:2.5rem; flex-shrink:0; }
+.cv-name { font-family:'Raleway',sans-serif; font-size:2.2rem; font-weight:800; letter-spacing:-.5px; }
+.cv-title { font-size:1rem; opacity:.85; margin-top:4px; }
+.cv-contacts { margin-top:12px; display:flex; flex-wrap:wrap; gap:16px; font-size:.78rem; opacity:.9; }
+.cv-contacts span { display:flex; align-items:center; gap:5px; }
+
+/* Body */
+.cv-body { display:grid; grid-template-columns:210px 1fr; }
+
+/* Sidebar */
+.cv-sidebar { background:#f8f9fa; padding:32px 20px; border-right:1px solid #e9ecef; }
+.sb-sec { margin-bottom:28px; }
+.sb-sec:last-child { margin-bottom:0; }
+.sb-title { font-family:'Raleway',sans-serif; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid var(--accent); }
+
+/* Skills */
+.skill-item { margin-bottom:10px; }
+.skill-name { font-size:.78rem; font-weight:600; color:#333; margin-bottom:4px; display:flex; justify-content:space-between; }
+.skill-lvl-txt { font-size:.68rem; color:#888; font-weight:400; }
+.skill-bar { height:5px; background:#e0e0e0; border-radius:3px; overflow:hidden; }
+.skill-fill { height:100%; background:var(--accent); border-radius:3px; }
+
+/* Language */
+.lang-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:.78rem; }
+.lang-name { font-weight:600; color:#333; }
+.lang-lvl { color:#888; font-size:.7rem; }
+
+/* Links */
+.link-item { display:flex; align-items:flex-start; gap:6px; font-size:.75rem; color:#555; margin-bottom:8px; word-break:break-all; }
+
+/* Cert/Award */
+.cert-item { margin-bottom:10px; }
+.cert-name { font-size:.82rem; font-weight:700; color:#1a1a2e; }
+.cert-sub { font-size:.74rem; color:#888; margin-top:2px; }
+
+/* Main */
+.cv-main { padding:32px 36px; }
+.main-sec { margin-bottom:28px; }
+.main-sec:last-child { margin-bottom:0; }
+.sec-hdg { font-family:'Raleway',sans-serif; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.sec-hdg::after { content:''; flex:1; height:1.5px; background:var(--accent); opacity:.25; }
+
+.cv-summary { font-size:.85rem; line-height:1.75; color:#555; }
+
+/* Entries */
+.entry { margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid #f0f0f0; }
+.entry:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.entry-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.entry-title { font-size:.92rem; font-weight:700; color:#1a1a2e; font-family:'Raleway',sans-serif; }
+.entry-date { font-size:.72rem; color:white; background:var(--accent); padding:3px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+.entry-org { font-size:.8rem; color:var(--accent); margin-top:3px; font-weight:600; }
+.entry-loc { font-size:.75rem; color:#888; margin-top:2px; }
+.entry-desc { font-size:.8rem; line-height:1.7; color:#555; margin-top:8px; white-space:pre-line; }
+
+/* Tech tags */
+.tech-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.tech-tag { background:rgba(0,0,0,.06); color:#555; border-radius:4px; padding:2px 8px; font-size:.7rem; font-weight:600; }
+
+/* Print toolbar */
+.print-bar { background:#1a1a2e; color:white; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:99; font-family:'Open Sans',sans-serif; }
+.print-bar a { color:white; text-decoration:none; font-size:.85rem; padding:6px 14px; border-radius:6px; border:1px solid rgba(255,255,255,.3); margin-left:8px; transition:background .2s; }
+.print-bar a:hover { background:rgba(255,255,255,.1); }
+.print-bar .btn-pdf { background:var(--accent); border-color:transparent; }
+
+@media print {
+  .print-bar { display:none !important; }
+  body { background:white; }
+  .cv-wrap { box-shadow:none; }
+}
+@page { size:A4; margin:0; }
+</style>
+</head>
+<body>
+
+<div class="print-bar">
+  <span style="font-weight:600">⬡ ResumeForge — {{ resume.title }}</span>
+  <div>
+    <a href="{% url 'resume_edit' resume.pk %}">← Edit</a>
+    <a href="{% url 'resume_pdf' resume.pk %}" class="btn-pdf">⬇ Download PDF</a>
+    <a href="javascript:window.print()">🖨 Print</a>
+  </div>
+</div>
+
+<div class="cv-wrap">
+
+  <!-- HEADER -->
+  <div class="cv-header">
+    {% if resume.photo %}
+      <img src="{{ resume.photo.url }}" class="cv-photo" alt="{{ resume.full_name }}">
+    {% else %}
+      <div class="cv-photo-ph">{{ resume.full_name|first|upper }}</div>
+    {% endif %}
+    <div>
+      <div class="cv-name">{{ resume.full_name }}</div>
+      {% if resume.job_title %}<div class="cv-title">{{ resume.job_title }}</div>{% endif %}
+      <div class="cv-contacts">
+        {% if resume.email %}<span>✉ {{ resume.email }}</span>{% endif %}
+        {% if resume.phone %}<span>☎ {{ resume.phone }}</span>{% endif %}
+        {% if resume.location %}<span>📍 {{ resume.location }}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="cv-body">
+
+    <!-- SIDEBAR -->
+    <aside class="cv-sidebar">
+
+      {% if resume.website or resume.linkedin or resume.github %}
+      <div class="sb-sec">
+        <div class="sb-title">Links</div>
+        {% if resume.website %}<div class="link-item"><span>🌐</span><span>{{ resume.website }}</span></div>{% endif %}
+        {% if resume.linkedin %}<div class="link-item"><span>in</span><span>{{ resume.linkedin }}</span></div>{% endif %}
+        {% if resume.github %}<div class="link-item"><span>⌨</span><span>{{ resume.github }}</span></div>{% endif %}
+      </div>
+      {% endif %}
+
+      {% if skills %}
+      <div class="sb-sec">
+        <div class="sb-title">Skills</div>
+        {% for sk in skills %}
+        <div class="skill-item">
+          <div class="skill-name">
+            {{ sk.name }}
+            <span class="skill-lvl-txt">{{ sk.get_level_display }}</span>
+          </div>
+          <div class="skill-bar">
+            <div class="skill-fill" style="width:{% if sk.level == 'expert' %}100%{% elif sk.level == 'advanced' %}80%{% elif sk.level == 'intermediate' %}58%{% else %}35%{% endif %}"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if languages %}
+      <div class="sb-sec">
+        <div class="sb-title">Languages</div>
+        {% for lang in languages %}
+        <div class="lang-item">
+          <span class="lang-name">{{ lang.name }}</span>
+          <span class="lang-lvl">{{ lang.get_proficiency_display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if certifications %}
+      <div class="sb-sec">
+        <div class="sb-title">Certifications</div>
+        {% for cert in certifications %}
+        <div class="cert-item">
+          <div class="cert-name">{{ cert.name }}</div>
+          <div class="cert-sub">{% if cert.issuer %}{{ cert.issuer }}{% if cert.date %} · {% endif %}{% endif %}{{ cert.date }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if awards %}
+      <div class="sb-sec">
+        <div class="sb-title">Awards</div>
+        {% for aw in awards %}
+        <div class="cert-item">
+          <div class="cert-name">{{ aw.title }}</div>
+          <div class="cert-sub">{% if aw.issuer %}{{ aw.issuer }} · {% endif %}{{ aw.date }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="cv-main">
+
+      {% if resume.summary %}
+      <div class="main-sec">
+        <div class="sec-hdg">Professional Summary</div>
+        <p class="cv-summary">{{ resume.summary }}</p>
+      </div>
+      {% endif %}
+
+      {% if work_experiences %}
+      <div class="main-sec">
+        <div class="sec-hdg">Work Experience</div>
+        {% for exp in work_experiences %}
+        <div class="entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">{{ exp.position }}</div>
+              <div class="entry-org">{{ exp.company }}{% if exp.location %} · {{ exp.location }}{% endif %}</div>
+            </div>
+            <div class="entry-date">{{ exp.start_date }} – {% if exp.is_current %}Present{% else %}{{ exp.end_date }}{% endif %}</div>
+          </div>
+          {% if exp.description %}<div class="entry-desc">{{ exp.description }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if educations %}
+      <div class="main-sec">
+        <div class="sec-hdg">Education</div>
+        {% for edu in educations %}
+        <div class="entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</div>
+              <div class="entry-org">{{ edu.institution }}{% if edu.location %} · {{ edu.location }}{% endif %}</div>
+              {% if edu.gpa %}<div class="entry-loc">GPA: {{ edu.gpa }}</div>{% endif %}
+            </div>
+            <div class="entry-date">{{ edu.start_date }} – {% if edu.is_current %}Present{% else %}{{ edu.end_date }}{% endif %}</div>
+          </div>
+          {% if edu.description %}<div class="entry-desc">{{ edu.description }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if projects %}
+      <div class="main-sec">
+        <div class="sec-hdg">Projects</div>
+        {% for proj in projects %}
+        <div class="entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">{{ proj.name }}{% if proj.role %} <span style="font-weight:400;font-size:.82rem;color:#888">· {{ proj.role }}</span>{% endif %}</div>
+              {% if proj.url %}<div class="entry-org" style="font-size:.72rem">{{ proj.url }}</div>{% endif %}
+            </div>
+            {% if proj.start_date %}<div class="entry-date">{{ proj.start_date }}{% if proj.end_date %} – {{ proj.end_date }}{% endif %}</div>{% endif %}
+          </div>
+          {% if proj.description %}<div class="entry-desc">{{ proj.description }}</div>{% endif %}
+          {% if proj.tech_list %}
+<div class="tech-tags">{% for t in proj.tech_list %}<span class="tech-tag">{{ t }}</span>{% endfor %}</div>
+{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if volunteer_works %}
+      <div class="main-sec">
+        <div class="sec-hdg">Volunteer Work</div>
+        {% for vol in volunteer_works %}
+        <div class="entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">{% if vol.role %}{{ vol.role }} — {% endif %}{{ vol.organization }}</div>
+            </div>
+            {% if vol.start_date %}<div class="entry-date">{{ vol.start_date }}{% if vol.end_date %} – {{ vol.end_date }}{% endif %}</div>{% endif %}
+          </div>
+          {% if vol.description %}<div class="entry-desc">{{ vol.description }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

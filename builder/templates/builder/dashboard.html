@@ -1,0 +1,78 @@
+{% extends 'builder/base.html' %}
+{% block title %}Dashboard — ResumeForge{% endblock %}
+{% block extra_css %}
+.resume-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; transition:border-color .2s,transform .2s; position:relative; overflow:hidden; }
+.resume-card:hover { border-color:var(--accent); transform:translateY(-3px); }
+.resume-card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; background:var(--gradient); }
+.tpl-badge { background:rgba(233,69,96,.1); color:var(--accent); border:1px solid rgba(233,69,96,.2); border-radius:20px; padding:3px 10px; font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.empty-state { min-height:400px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700">My Resumes</h1>
+      <p style="color:var(--muted);margin-bottom:0">{{ resumes.count }} resume{{ resumes.count|pluralize }} saved</p>
+    </div>
+    <a href="{% url 'resume_create' %}" class="btn btn-accent px-4 py-2">
+      <i class="bi bi-plus-lg me-2"></i>New Resume
+    </a>
+  </div>
+
+  {% if resumes %}
+  <div class="row g-4">
+    {% for r in resumes %}
+    <div class="col-md-6 col-lg-4">
+      <div class="resume-card h-100">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h5 style="font-weight:600;margin-bottom:4px">{{ r.title }}</h5>
+            <span class="tpl-badge">{{ r.get_template_display }}</span>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-sm" style="background:transparent;color:var(--muted);border:none" data-bs-toggle="dropdown">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" style="background:var(--surface);border-color:var(--border)">
+              <li><a class="dropdown-item text-light" href="{% url 'resume_edit' r.pk %}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+              <li><a class="dropdown-item text-light" href="{% url 'resume_preview' r.pk %}" target="_blank"><i class="bi bi-eye me-2"></i>Preview</a></li>
+              <li><a class="dropdown-item text-light" href="{% url 'resume_pdf' r.pk %}"><i class="bi bi-file-earmark-pdf me-2"></i>Export PDF</a></li>
+              <li><hr class="dropdown-divider" style="border-color:var(--border)"></li>
+              <li>
+                <form method="post" action="{% url 'resume_delete' r.pk %}" onsubmit="return confirm('Delete this resume?')">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        </div>
+        {% if r.full_name %}<div style="font-size:.85rem;color:var(--muted)"><i class="bi bi-person me-1"></i>{{ r.full_name }}</div>{% endif %}
+        {% if r.job_title %}<div style="font-size:.85rem;color:var(--accent)"><i class="bi bi-briefcase me-1"></i>{{ r.job_title }}</div>{% endif %}
+        <div class="d-flex flex-wrap gap-3 my-3" style="font-size:.72rem;color:var(--muted)">
+          {% if r.work_experiences.count %}<span><i class="bi bi-building me-1"></i>{{ r.work_experiences.count }} job{{ r.work_experiences.count|pluralize }}</span>{% endif %}
+          {% if r.educations.count %}<span><i class="bi bi-mortarboard me-1"></i>{{ r.educations.count }} edu</span>{% endif %}
+          {% if r.skills.count %}<span><i class="bi bi-lightning me-1"></i>{{ r.skills.count }} skill{{ r.skills.count|pluralize }}</span>{% endif %}
+        </div>
+        <div style="font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);padding-top:12px">
+          <i class="bi bi-clock me-1"></i>Updated {{ r.updated_at|timesince }} ago
+        </div>
+        <div class="mt-3 d-flex gap-2">
+          <a href="{% url 'resume_edit' r.pk %}" class="btn btn-sm btn-outline-accent flex-grow-1"><i class="bi bi-pencil me-1"></i>Edit</a>
+          <a href="{% url 'resume_preview' r.pk %}" class="btn btn-sm flex-grow-1" style="border:1px solid var(--border);color:var(--muted);border-radius:8px" target="_blank"><i class="bi bi-eye me-1"></i>Preview</a>
+          <a href="{% url 'resume_pdf' r.pk %}" class="btn btn-sm btn-accent flex-grow-1"><i class="bi bi-download me-1"></i>PDF</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div style="font-size:4rem;margin-bottom:16px;opacity:.4">📄</div>
+    <h3 style="font-family:'Playfair Display',serif;margin-bottom:8px">No resumes yet</h3>
+    <p style="color:var(--muted);margin-bottom:24px">Create your first professional resume in minutes</p>
+    <a href="{% url 'resume_create' %}" class="btn btn-accent px-5 py-2"><i class="bi bi-plus-lg me-2"></i>Create My First Resume</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

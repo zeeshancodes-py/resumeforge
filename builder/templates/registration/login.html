@@ -1,0 +1,39 @@
+{% extends 'builder/base.html' %}
+{% block title %}Login — ResumeForge{% endblock %}
+{% block extra_css %}
+.auth-wrap { min-height:calc(100vh - 70px); display:flex; align-items:center; justify-content:center; padding:40px 16px; }
+.auth-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:48px 40px; width:100%; max-width:440px; }
+.auth-title { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; }
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="text-center mb-4">
+      <div style="font-size:2rem;margin-bottom:8px">⬡</div>
+      <div class="auth-title">Welcome Back</div>
+      <p style="color:var(--muted);font-size:.9rem">Sign in to your ResumeForge account</p>
+    </div>
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        {{ form.username }}
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Password</label>
+        {{ form.password }}
+      </div>
+      <button type="submit" class="btn btn-accent w-100 py-3" style="font-size:1rem">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      </button>
+    </form>
+    <hr style="border-color:var(--border);margin:24px 0">
+    <p class="text-center mb-0" style="color:var(--muted);font-size:.9rem">
+      No account? <a href="{% url 'register' %}" style="color:var(--accent);text-decoration:none">Create one free</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

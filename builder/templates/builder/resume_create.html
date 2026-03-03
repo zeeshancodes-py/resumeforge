@@ -1,0 +1,69 @@
+{% extends 'builder/base.html' %}
+{% block title %}Create Resume — ResumeForge{% endblock %}
+{% block extra_css %}
+.create-wrap { max-width:700px; margin:0 auto; padding:60px 16px; }
+.tpl-opt input[type="radio"] { display:none; }
+.tpl-box { background:var(--surface); border:2px solid var(--border); border-radius:14px; padding:20px; text-align:center; transition:all .2s; cursor:pointer; }
+.tpl-opt input:checked + .tpl-box { border-color:var(--accent); background:rgba(233,69,96,.08); }
+.tpl-box:hover { border-color:rgba(233,69,96,.5); }
+.tpl-icon { font-size:2.5rem; margin-bottom:10px; }
+.color-opt input[type="radio"] { display:none; }
+.color-swatch { width:36px; height:36px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:transform .15s,border-color .15s; }
+.color-opt input:checked + .color-swatch { border-color:white; transform:scale(1.2); }
+{% endblock %}
+{% block content %}
+<div class="create-wrap">
+  <div class="mb-4">
+    <a href="{% url 'dashboard' %}" style="color:var(--muted);text-decoration:none;font-size:.9rem"><i class="bi bi-arrow-left me-1"></i>Back to Dashboard</a>
+  </div>
+  <h1 style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;margin-bottom:8px">Create New Resume</h1>
+  <p style="color:var(--muted);margin-bottom:40px">Choose a template and style to get started</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <!-- Title -->
+    <div class="card-dark p-4 mb-4">
+      <h6 style="font-weight:600;margin-bottom:16px"><i class="bi bi-tag me-2" style="color:var(--accent)"></i>Resume Name</h6>
+      {{ form.title }}
+    </div>
+
+    <!-- Template -->
+    <div class="card-dark p-4 mb-4">
+      <h6 style="font-weight:600;margin-bottom:20px"><i class="bi bi-layout-text-sidebar me-2" style="color:var(--accent)"></i>Choose Template</h6>
+      <div class="row g-3">
+        {% for value, label in form.fields.template.choices %}
+        <div class="col-6 col-md-4 col-lg-2">
+          <label class="tpl-opt d-block">
+            <input type="radio" name="template" value="{{ value }}" {% if forloop.first %}checked{% endif %}>
+            <div class="tpl-box">
+              <div class="tpl-icon">
+                {% if value == 'modern' %}🎨{% elif value == 'classic' %}📋{% elif value == 'minimal' %}◻️{% elif value == 'executive' %}👔{% elif value == 'creative' %}✨{% elif value == 'tech' %}💻{% endif %}
+              </div>
+              <div style="font-weight:600;font-size:.85rem">{{ label }}</div>
+            </div>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Color -->
+    <div class="card-dark p-4 mb-4">
+      <h6 style="font-weight:600;margin-bottom:16px"><i class="bi bi-palette me-2" style="color:var(--accent)"></i>Accent Color</h6>
+      <div class="d-flex flex-wrap gap-3">
+        {% for value, label in form.fields.accent_color.choices %}
+        <label class="color-opt" title="{{ label }}">
+          <input type="radio" name="accent_color" value="{{ value }}" {% if forloop.first %}checked{% endif %}>
+          <div class="color-swatch" style="background:{{ value }}"></div>
+        </label>
+        {% endfor %}
+      </div>
+      <p style="color:var(--muted);font-size:.8rem;margin-top:12px">You can change this later while editing.</p>
+    </div>
+
+    <button type="submit" class="btn btn-accent w-100 py-3" style="font-size:1rem">
+      <i class="bi bi-arrow-right me-2"></i>Continue to Edit Resume
+    </button>
+  </form>
+</div>
+{% endblock %}

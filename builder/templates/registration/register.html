@@ -1,0 +1,60 @@
+{% extends 'builder/base.html' %}
+{% block title %}Register — ResumeForge{% endblock %}
+{% block extra_css %}
+.auth-wrap { min-height:calc(100vh - 70px); display:flex; align-items:center; justify-content:center; padding:40px 16px; }
+.auth-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:48px 40px; width:100%; max-width:500px; }
+.auth-title { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; }
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="text-center mb-4">
+      <div style="font-size:2rem;margin-bottom:8px">⬡</div>
+      <div class="auth-title">Create Account</div>
+      <p style="color:var(--muted);font-size:.9rem">Start building professional resumes today</p>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div class="text-danger mt-1" style="font-size:.8rem">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-6">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<div class="text-danger mt-1" style="font-size:.8rem">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div class="text-danger mt-1" style="font-size:.8rem">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="text-danger mt-1" style="font-size:.8rem">{{ form.username.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Password</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}<div class="text-danger mt-1" style="font-size:.8rem">{{ form.password1.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Confirm Password</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}<div class="text-danger mt-1" style="font-size:.8rem">{{ form.password2.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-accent w-100 py-3 mt-4" style="font-size:1rem">
+        <i class="bi bi-person-plus me-2"></i>Create Account
+      </button>
+    </form>
+    <hr style="border-color:var(--border);margin:24px 0">
+    <p class="text-center mb-0" style="color:var(--muted);font-size:.9rem">
+      Already have an account? <a href="{% url 'login' %}" style="color:var(--accent);text-decoration:none">Sign In</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

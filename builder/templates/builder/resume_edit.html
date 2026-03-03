@@ -1,0 +1,639 @@
+{% extends 'builder/base.html' %}
+{% block title %}Edit — {{ resume.title }}{% endblock %}
+
+{% block extra_css %}
+body { background:#0d0d1a; }
+.editor-layout { display:grid; grid-template-columns:300px 1fr; min-height:calc(100vh - 62px); }
+.editor-sidebar { background:var(--surface); border-right:1px solid var(--border); overflow-y:auto; position:sticky; top:62px; height:calc(100vh - 62px); }
+.sidebar-hdr { padding:20px; border-bottom:1px solid var(--border); font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.snav { display:flex; align-items:center; gap:10px; padding:10px 20px; color:var(--muted); text-decoration:none; font-size:.875rem; font-weight:500; transition:all .15s; cursor:pointer; border:none; background:none; width:100%; text-align:left; }
+.snav:hover,.snav.active { color:var(--accent); background:rgba(233,69,96,.08); }
+.snav .ico { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:.85rem; background:rgba(255,255,255,.06); }
+.snav.active .ico { background:rgba(233,69,96,.2); }
+.editor-main { overflow-y:auto; background:#0d0d1a; }
+.editor-section { display:none; padding:32px; max-width:860px; }
+.editor-section.active { display:block; }
+.sec-title { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+.item-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden; transition:border-color .2s; }
+.item-card:hover { border-color:rgba(233,69,96,.3); }
+.item-card-hdr { padding:14px 16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.item-card-body { padding:0 16px 16px; border-top:1px solid var(--border); display:none; }
+.item-card-body.open { display:block; padding-top:16px; }
+.item-title { font-weight:600; font-size:.9rem; }
+.item-sub { color:var(--muted); font-size:.78rem; margin-top:2px; }
+.add-panel { background:rgba(15,52,96,.2); border:1px dashed var(--border); border-radius:12px; padding:24px; margin-top:16px; display:none; }
+.add-panel.open { display:block; }
+.editor-topbar { background:rgba(22,33,62,.95); border-bottom:1px solid var(--border); padding:12px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:62px; z-index:20; }
+.btn-icon { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:7px 12px; font-size:.8rem; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.btn-icon:hover { border-color:var(--accent); color:var(--accent); }
+{% endblock %}
+
+{% block content %}
+<!-- Topbar -->
+<div class="editor-topbar">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{% url 'dashboard' %}" class="btn-icon"><i class="bi bi-arrow-left"></i></a>
+    <div>
+      <div style="font-weight:600;font-size:.95rem">{{ resume.title }}</div>
+      <div style="font-size:.75rem;color:var(--muted)">{{ resume.get_template_display }} template</div>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'resume_preview' resume.pk %}" target="_blank" class="btn-icon"><i class="bi bi-eye"></i> Preview</a>
+    <a href="{% url 'resume_pdf' resume.pk %}" class="btn btn-accent btn-sm px-3"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+  </div>
+</div>
+
+<div class="editor-layout">
+  <!-- Sidebar -->
+  <aside class="editor-sidebar">
+    <div class="sidebar-hdr">Sections</div>
+    <nav class="py-2">
+      {% for s in sidebar_sections %}
+      <button class="snav {% if forloop.first %}active{% endif %}" onclick="showSection('{{ s.id }}', this)">
+        <span class="ico">{{ s.icon }}</span>
+        <span>{{ s.label }}</span>
+        {% if s.count != '' %}
+        <span class="ms-auto badge-section" style="font-size:.65rem">{{ s.count }}</span>
+        {% endif %}
+      </button>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="editor-main">
+
+    <!-- Personal -->
+    <div class="editor-section active" id="section-personal">
+      <div class="sec-title"><span style="color:var(--accent)">👤</span> Personal Information</div>
+      <form id="personal-form" method="post" action="{% url 'resume_save_personal' resume.pk %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Full Name</label>{{ personal_form.full_name }}</div>
+          <div class="col-md-6"><label class="form-label">Job Title / Headline</label>{{ personal_form.job_title }}</div>
+          <div class="col-md-6"><label class="form-label">Email</label>{{ personal_form.email }}</div>
+          <div class="col-md-6"><label class="form-label">Phone</label>{{ personal_form.phone }}</div>
+          <div class="col-md-6"><label class="form-label">Location</label>{{ personal_form.location }}</div>
+          <div class="col-md-6"><label class="form-label">Website <span style="color:var(--muted)">(optional)</span></label>{{ personal_form.website }}</div>
+          <div class="col-md-6"><label class="form-label">LinkedIn <span style="color:var(--muted)">(optional)</span></label>{{ personal_form.linkedin }}</div>
+          <div class="col-md-6"><label class="form-label">GitHub <span style="color:var(--muted)">(optional)</span></label>{{ personal_form.github }}</div>
+          <div class="col-12">
+            <label class="form-label">Profile Photo <span style="color:var(--muted)">(optional)</span></label>
+            {{ personal_form.photo }}
+            {% if resume.photo %}<div class="mt-2"><img src="{{ resume.photo.url }}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)"></div>{% endif %}
+          </div>
+          <div class="col-12"><label class="form-label">Professional Summary <span style="color:var(--muted)">(optional)</span></label>{{ personal_form.summary }}</div>
+        </div>
+        <div class="mt-4">
+          <button type="button" onclick="savePersonal()" class="btn btn-accent px-4">
+            <i class="bi bi-check2 me-1"></i>Save Personal Info
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Work Experience -->
+    <div class="editor-section" id="section-work">
+      <div class="sec-title"><span style="color:var(--accent)">💼</span> Work Experience</div>
+      <div id="work-list">
+        {% for exp in work_experiences %}
+        <div class="item-card" id="work-item-{{ exp.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ exp.position }}</div>
+              <div class="item-sub">{{ exp.company }}{% if exp.location %} · {{ exp.location }}{% endif %} · {{ exp.start_date }} – {% if exp.is_current %}Present{% else %}{{ exp.end_date }}{% endif %}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('work',{{ exp.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'work',{{ exp.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Position</label><input class="form-control" name="position" value="{{ exp.position }}"></div>
+                <div class="col-md-6"><label class="form-label">Company</label><input class="form-control" name="company" value="{{ exp.company }}"></div>
+                <div class="col-md-6"><label class="form-label">Location</label><input class="form-control" name="location" value="{{ exp.location }}"></div>
+                <div class="col-md-3"><label class="form-label">Start Date</label><input class="form-control" name="start_date" value="{{ exp.start_date }}"></div>
+                <div class="col-md-3"><label class="form-label">End Date</label><input class="form-control" name="end_date" value="{{ exp.end_date }}" {% if exp.is_current %}disabled{% endif %}></div>
+                <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="is_current" {% if exp.is_current %}checked{% endif %} onchange="this.closest('form').querySelector('[name=end_date]').disabled=this.checked"><label class="form-check-label ms-2" style="color:var(--muted)">Currently working here</label></div></div>
+                <div class="col-12"><label class="form-label">Description / Achievements</label><textarea class="form-control" name="description" rows="4">{{ exp.description }}</textarea></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('work')"><i class="bi bi-plus-lg me-1"></i>Add Work Experience</button>
+      <div class="add-panel" id="add-panel-work">
+        <h6 style="margin-bottom:16px;color:var(--muted)">New Work Experience</h6>
+        <form onsubmit="addItem(event,'work')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Position *</label>{{ work_form.position }}</div>
+            <div class="col-md-6"><label class="form-label">Company *</label>{{ work_form.company }}</div>
+            <div class="col-md-6"><label class="form-label">Location</label>{{ work_form.location }}</div>
+            <div class="col-md-3"><label class="form-label">Start Date *</label>{{ work_form.start_date }}</div>
+            <div class="col-md-3"><label class="form-label">End Date</label>{{ work_form.end_date }}</div>
+            <div class="col-12"><div class="form-check">{{ work_form.is_current }}<label class="form-check-label ms-2" style="color:var(--muted)">Currently working here</label></div></div>
+            <div class="col-12"><label class="form-label">Description</label>{{ work_form.description }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('work')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Education -->
+    <div class="editor-section" id="section-education">
+      <div class="sec-title"><span style="color:var(--accent)">🎓</span> Education</div>
+      <div id="education-list">
+        {% for edu in educations %}
+        <div class="item-card" id="education-item-{{ edu.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</div>
+              <div class="item-sub">{{ edu.institution }} · {{ edu.start_date }} – {% if edu.is_current %}Present{% else %}{{ edu.end_date }}{% endif %}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('education',{{ edu.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'education',{{ edu.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Institution *</label><input class="form-control" name="institution" value="{{ edu.institution }}"></div>
+                <div class="col-md-6"><label class="form-label">Degree *</label><input class="form-control" name="degree" value="{{ edu.degree }}"></div>
+                <div class="col-md-6"><label class="form-label">Field of Study</label><input class="form-control" name="field_of_study" value="{{ edu.field_of_study }}"></div>
+                <div class="col-md-6"><label class="form-label">Location</label><input class="form-control" name="location" value="{{ edu.location }}"></div>
+                <div class="col-md-3"><label class="form-label">Start Date *</label><input class="form-control" name="start_date" value="{{ edu.start_date }}"></div>
+                <div class="col-md-3"><label class="form-label">End Date</label><input class="form-control" name="end_date" value="{{ edu.end_date }}"></div>
+                <div class="col-md-3"><label class="form-label">GPA</label><input class="form-control" name="gpa" value="{{ edu.gpa }}"></div>
+                <div class="col-12"><label class="form-label">Notes</label><textarea class="form-control" name="description" rows="2">{{ edu.description }}</textarea></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('education')"><i class="bi bi-plus-lg me-1"></i>Add Education</button>
+      <div class="add-panel" id="add-panel-education">
+        <form onsubmit="addItem(event,'education')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Institution *</label>{{ education_form.institution }}</div>
+            <div class="col-md-6"><label class="form-label">Degree *</label>{{ education_form.degree }}</div>
+            <div class="col-md-6"><label class="form-label">Field of Study</label>{{ education_form.field_of_study }}</div>
+            <div class="col-md-6"><label class="form-label">Location</label>{{ education_form.location }}</div>
+            <div class="col-md-3"><label class="form-label">Start Date *</label>{{ education_form.start_date }}</div>
+            <div class="col-md-3"><label class="form-label">End Date</label>{{ education_form.end_date }}</div>
+            <div class="col-md-3"><label class="form-label">GPA</label>{{ education_form.gpa }}</div>
+            <div class="col-12"><label class="form-label">Notes</label>{{ education_form.description }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('education')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="editor-section" id="section-skill">
+      <div class="sec-title"><span style="color:var(--accent)">⚡</span> Skills</div>
+      <div id="skill-list">
+        {% for sk in skills %}
+        <div class="item-card" id="skill-item-{{ sk.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ sk.name }}</div>
+              <div class="item-sub">{{ sk.get_level_display }}{% if sk.category %} · {{ sk.category }}{% endif %}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('skill',{{ sk.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'skill',{{ sk.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-5"><label class="form-label">Skill Name *</label><input class="form-control" name="name" value="{{ sk.name }}"></div>
+                <div class="col-md-4"><label class="form-label">Level</label><select class="form-select" name="level">{% for v,l in skill_form.fields.level.choices %}<option value="{{ v }}" {% if sk.level == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div class="col-md-3"><label class="form-label">Category</label><input class="form-control" name="category" value="{{ sk.category }}"></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('skill')"><i class="bi bi-plus-lg me-1"></i>Add Skill</button>
+      <div class="add-panel" id="add-panel-skill">
+        <form onsubmit="addItem(event,'skill')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-5"><label class="form-label">Skill Name *</label>{{ skill_form.name }}</div>
+            <div class="col-md-4"><label class="form-label">Level</label>{{ skill_form.level }}</div>
+            <div class="col-md-3"><label class="form-label">Category</label>{{ skill_form.category }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('skill')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Projects -->
+    <div class="editor-section" id="section-project">
+      <div class="sec-title"><span style="color:var(--accent)">🚀</span> Projects <small style="font-size:.65rem;color:var(--muted);font-family:'DM Sans',sans-serif">(optional)</small></div>
+      <div id="project-list">
+        {% for proj in projects %}
+        <div class="item-card" id="project-item-{{ proj.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ proj.name }}</div>
+              <div class="item-sub">{% if proj.role %}{{ proj.role }} · {% endif %}{{ proj.technologies|truncatechars:50 }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('project',{{ proj.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'project',{{ proj.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Project Name *</label><input class="form-control" name="name" value="{{ proj.name }}"></div>
+                <div class="col-md-6"><label class="form-label">Your Role</label><input class="form-control" name="role" value="{{ proj.role }}"></div>
+                <div class="col-md-3"><label class="form-label">Start</label><input class="form-control" name="start_date" value="{{ proj.start_date }}"></div>
+                <div class="col-md-3"><label class="form-label">End</label><input class="form-control" name="end_date" value="{{ proj.end_date }}"></div>
+                <div class="col-md-6"><label class="form-label">URL</label><input class="form-control" name="url" value="{{ proj.url }}"></div>
+                <div class="col-12"><label class="form-label">Technologies</label><input class="form-control" name="technologies" value="{{ proj.technologies }}"></div>
+                <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3">{{ proj.description }}</textarea></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('project')"><i class="bi bi-plus-lg me-1"></i>Add Project</button>
+      <div class="add-panel" id="add-panel-project">
+        <form onsubmit="addItem(event,'project')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Project Name *</label>{{ project_form.name }}</div>
+            <div class="col-md-6"><label class="form-label">Your Role</label>{{ project_form.role }}</div>
+            <div class="col-md-3"><label class="form-label">Start</label>{{ project_form.start_date }}</div>
+            <div class="col-md-3"><label class="form-label">End</label>{{ project_form.end_date }}</div>
+            <div class="col-md-6"><label class="form-label">URL</label>{{ project_form.url }}</div>
+            <div class="col-12"><label class="form-label">Technologies</label>{{ project_form.technologies }}</div>
+            <div class="col-12"><label class="form-label">Description</label>{{ project_form.description }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('project')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Certifications -->
+    <div class="editor-section" id="section-certification">
+      <div class="sec-title"><span style="color:var(--accent)">🏆</span> Certifications <small style="font-size:.65rem;color:var(--muted);font-family:'DM Sans',sans-serif">(optional)</small></div>
+      <div id="certification-list">
+        {% for cert in certifications %}
+        <div class="item-card" id="certification-item-{{ cert.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ cert.name }}</div>
+              <div class="item-sub">{% if cert.issuer %}{{ cert.issuer }} · {% endif %}{{ cert.date }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('certification',{{ cert.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'certification',{{ cert.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Name *</label><input class="form-control" name="name" value="{{ cert.name }}"></div>
+                <div class="col-md-6"><label class="form-label">Issuer</label><input class="form-control" name="issuer" value="{{ cert.issuer }}"></div>
+                <div class="col-md-3"><label class="form-label">Date</label><input class="form-control" name="date" value="{{ cert.date }}"></div>
+                <div class="col-md-3"><label class="form-label">Expiry</label><input class="form-control" name="expiry_date" value="{{ cert.expiry_date }}"></div>
+                <div class="col-md-6"><label class="form-label">Credential ID</label><input class="form-control" name="credential_id" value="{{ cert.credential_id }}"></div>
+                <div class="col-md-6"><label class="form-label">URL</label><input class="form-control" name="url" value="{{ cert.url }}"></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('certification')"><i class="bi bi-plus-lg me-1"></i>Add Certification</button>
+      <div class="add-panel" id="add-panel-certification">
+        <form onsubmit="addItem(event,'certification')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Name *</label>{{ certification_form.name }}</div>
+            <div class="col-md-6"><label class="form-label">Issuer</label>{{ certification_form.issuer }}</div>
+            <div class="col-md-3"><label class="form-label">Date</label>{{ certification_form.date }}</div>
+            <div class="col-md-3"><label class="form-label">Expiry</label>{{ certification_form.expiry_date }}</div>
+            <div class="col-md-6"><label class="form-label">Credential ID</label>{{ certification_form.credential_id }}</div>
+            <div class="col-md-6"><label class="form-label">URL</label>{{ certification_form.url }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('certification')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Languages -->
+    <div class="editor-section" id="section-language">
+      <div class="sec-title"><span style="color:var(--accent)">🌐</span> Languages <small style="font-size:.65rem;color:var(--muted);font-family:'DM Sans',sans-serif">(optional)</small></div>
+      <div id="language-list">
+        {% for lang in languages %}
+        <div class="item-card" id="language-item-{{ lang.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ lang.name }}</div>
+              <div class="item-sub">{{ lang.get_proficiency_display }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('language',{{ lang.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'language',{{ lang.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Language *</label><input class="form-control" name="name" value="{{ lang.name }}"></div>
+                <div class="col-md-6"><label class="form-label">Proficiency</label><select class="form-select" name="proficiency">{% for v,l in language_form.fields.proficiency.choices %}<option value="{{ v }}" {% if lang.proficiency == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('language')"><i class="bi bi-plus-lg me-1"></i>Add Language</button>
+      <div class="add-panel" id="add-panel-language">
+        <form onsubmit="addItem(event,'language')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Language *</label>{{ language_form.name }}</div>
+            <div class="col-md-6"><label class="form-label">Proficiency</label>{{ language_form.proficiency }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('language')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Awards -->
+    <div class="editor-section" id="section-award">
+      <div class="sec-title"><span style="color:var(--accent)">🎖️</span> Awards <small style="font-size:.65rem;color:var(--muted);font-family:'DM Sans',sans-serif">(optional)</small></div>
+      <div id="award-list">
+        {% for aw in awards %}
+        <div class="item-card" id="award-item-{{ aw.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ aw.title }}</div>
+              <div class="item-sub">{% if aw.issuer %}{{ aw.issuer }} · {% endif %}{{ aw.date }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('award',{{ aw.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'award',{{ aw.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Title *</label><input class="form-control" name="title" value="{{ aw.title }}"></div>
+                <div class="col-md-4"><label class="form-label">Issuer</label><input class="form-control" name="issuer" value="{{ aw.issuer }}"></div>
+                <div class="col-md-2"><label class="form-label">Date</label><input class="form-control" name="date" value="{{ aw.date }}"></div>
+                <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="2">{{ aw.description }}</textarea></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('award')"><i class="bi bi-plus-lg me-1"></i>Add Award</button>
+      <div class="add-panel" id="add-panel-award">
+        <form onsubmit="addItem(event,'award')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Title *</label>{{ award_form.title }}</div>
+            <div class="col-md-4"><label class="form-label">Issuer</label>{{ award_form.issuer }}</div>
+            <div class="col-md-2"><label class="form-label">Date</label>{{ award_form.date }}</div>
+            <div class="col-12"><label class="form-label">Description</label>{{ award_form.description }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('award')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Volunteer -->
+    <div class="editor-section" id="section-volunteer">
+      <div class="sec-title"><span style="color:var(--accent)">🤝</span> Volunteer Work <small style="font-size:.65rem;color:var(--muted);font-family:'DM Sans',sans-serif">(optional)</small></div>
+      <div id="volunteer-list">
+        {% for vol in volunteer_works %}
+        <div class="item-card" id="volunteer-item-{{ vol.pk }}">
+          <div class="item-card-hdr" onclick="toggleItem(this)">
+            <div>
+              <div class="item-title">{{ vol.organization }}</div>
+              <div class="item-sub">{% if vol.role %}{{ vol.role }} · {% endif %}{{ vol.start_date }}{% if vol.end_date %} – {{ vol.end_date }}{% endif %}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation();deleteItem('volunteer',{{ vol.pk }})" title="Delete"><i class="bi bi-trash" style="color:#e74c3c"></i></button>
+              <i class="bi bi-chevron-down" style="color:var(--muted)"></i>
+            </div>
+          </div>
+          <div class="item-card-body">
+            <form onsubmit="updateItem(event,'volunteer',{{ vol.pk }})">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Organization *</label><input class="form-control" name="organization" value="{{ vol.organization }}"></div>
+                <div class="col-md-6"><label class="form-label">Role</label><input class="form-control" name="role" value="{{ vol.role }}"></div>
+                <div class="col-md-3"><label class="form-label">Start</label><input class="form-control" name="start_date" value="{{ vol.start_date }}"></div>
+                <div class="col-md-3"><label class="form-label">End</label><input class="form-control" name="end_date" value="{{ vol.end_date }}"></div>
+                <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3">{{ vol.description }}</textarea></div>
+              </div>
+              <button type="submit" class="btn btn-accent btn-sm mt-3 px-4"><i class="bi bi-check2 me-1"></i>Update</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-outline-accent mt-2" onclick="toggleAddPanel('volunteer')"><i class="bi bi-plus-lg me-1"></i>Add Volunteer Work</button>
+      <div class="add-panel" id="add-panel-volunteer">
+        <form onsubmit="addItem(event,'volunteer')">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Organization *</label>{{ volunteer_form.organization }}</div>
+            <div class="col-md-6"><label class="form-label">Role</label>{{ volunteer_form.role }}</div>
+            <div class="col-md-3"><label class="form-label">Start</label>{{ volunteer_form.start_date }}</div>
+            <div class="col-md-3"><label class="form-label">End</label>{{ volunteer_form.end_date }}</div>
+            <div class="col-12"><label class="form-label">Description</label>{{ volunteer_form.description }}</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-accent btn-sm px-4"><i class="bi bi-plus me-1"></i>Add</button>
+            <button type="button" class="btn-icon btn-sm" onclick="toggleAddPanel('volunteer')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Style -->
+    <div class="editor-section" id="section-style">
+      <div class="sec-title"><span style="color:var(--accent)">🎨</span> Style & Template</div>
+      <form id="meta-form" method="post" action="{% url 'resume_save_meta' resume.pk %}">
+        {% csrf_token %}
+        <div class="card-dark p-4 mb-4">
+          <div class="mb-3"><label class="form-label">Resume Title</label>{{ meta_form.title }}</div>
+          <div class="mb-3"><label class="form-label">Template</label>{{ meta_form.template }}</div>
+          <div class="mb-3"><label class="form-label">Accent Color</label>{{ meta_form.accent_color }}</div>
+        </div>
+        <button type="button" onclick="saveMeta()" class="btn btn-accent px-4">
+          <i class="bi bi-check2 me-1"></i>Save Style Settings
+        </button>
+      </form>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const RESUME_PK = {{ resume.pk }};
+const CSRF = getCookie('csrftoken');
+
+function showSection(id, btn) {
+  document.querySelectorAll('.editor-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.snav').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleItem(hdr) {
+  const body = hdr.nextElementSibling;
+  const icon = hdr.querySelector('.bi-chevron-down');
+  body.classList.toggle('open');
+  if (icon) icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+function toggleAddPanel(section) {
+  document.getElementById('add-panel-' + section).classList.toggle('open');
+}
+
+async function savePersonal() {
+  const form = document.getElementById('personal-form');
+  const data = new FormData(form);
+  const res = await fetch(form.action, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    body: data
+  });
+  const json = await res.json();
+  showToast(json.status === 'success' ? 'Personal info saved!' : 'Error saving', json.status);
+}
+
+async function saveMeta() {
+  const form = document.getElementById('meta-form');
+  const data = new FormData(form);
+  const res = await fetch(form.action, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    body: data
+  });
+  const json = await res.json();
+  showToast(json.status === 'success' ? 'Style saved!' : 'Error saving', json.status);
+}
+
+async function addItem(event, section) {
+  event.preventDefault();
+  const form = event.target;
+  const data = new FormData(form);
+  const res = await fetch(`/resume/${RESUME_PK}/section/${section}/add/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    body: data
+  });
+  const json = await res.json();
+  if (json.status === 'success') {
+    showToast('Added!');
+    form.reset();
+    setTimeout(() => location.reload(), 600);
+  } else {
+    showToast('Error: check required fields', 'error');
+  }
+}
+
+async function updateItem(event, section, id) {
+  event.preventDefault();
+  const form = event.target;
+  const data = new FormData(form);
+  const res = await fetch(`/resume/${RESUME_PK}/section/${section}/${id}/update/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    body: data
+  });
+  const json = await res.json();
+  showToast(json.status === 'success' ? 'Updated!' : 'Error updating', json.status);
+}
+
+async function deleteItem(section, id) {
+  if (!confirm('Delete this item?')) return;
+  const res = await fetch(`/resume/${RESUME_PK}/section/${section}/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+  });
+  const json = await res.json();
+  if (json.status === 'success') {
+    const el = document.getElementById(`${section}-item-${id}`);
+    if (el) el.remove();
+    showToast('Deleted.');
+  }
+}
+</script>
+{% endblock %}
+```
+
+---
+
+The 6 CV templates (Files 22–27) are long, so here they are:
+
+## 📁 FILE 22–27: CV Templates
+
+These are the same templates from the zip — `modern.html`, `classic.html`, `minimal.html`, `executive.html`, `creative.html`, and `tech.html` — and their full code is in the downloadable zip above. Each follows this structure:
+```
+builder/templates/builder/cv_templates/
+├── modern.html      → dark sidebar + colored header
+├── classic.html     → centered name, EB Garamond, double-border
+├── minimal.html     → single column, Inter, grid dates
+├── executive.html   → two-column, Cormorant Garamond, premium
+├── creative.html    → asymmetric header, dark sidebar
+└── tech.html        → GitHub-dark header, terminal style
